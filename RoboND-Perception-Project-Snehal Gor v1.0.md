@@ -3,42 +3,8 @@
 
 ---
 
-
-# Required Steps for a Passing Submission:
-1. Extract features and train an SVM model on new objects (see `pick_list_*.yaml` in `/pr2_robot/config/` for the list of models you'll be trying to identify). 
-2. Write a ROS node and subscribe to `/pr2/world/points` topic. This topic contains noisy point cloud data that you must work with.
-3. Use filtering and RANSAC plane fitting to isolate the objects of interest from the rest of the scene.
-4. Apply Euclidean clustering to create separate clusters for individual items.
-5. Perform object recognition on these objects and assign them labels (markers in RViz).
-6. Calculate the centroid (average in x, y and z) of the set of points belonging to that each object.
-7. Create ROS messages containing the details of each object (name, pick_pose, etc.) and write these messages out to `.yaml` files, one for each of the 3 scenarios (`test1-3.world` in `/pr2_robot/worlds/`).  [See the example `output.yaml` for details on what the output should look like.](https://github.com/udacity/RoboND-Perception-Project/blob/master/pr2_robot/config/output.yaml)  
-8. Submit a link to your GitHub repo for the project or the Python code for your perception pipeline and your output `.yaml` files (3 `.yaml` files, one for each test world).  You must have correctly identified 100% of objects from `pick_list_1.yaml` for `test1.world`, 80% of items from `pick_list_2.yaml` for `test2.world` and 75% of items from `pick_list_3.yaml` in `test3.world`.
-9. Congratulations!  Your Done!
-
-# Extra Challenges: Complete the Pick & Place
-7. To create a collision map, publish a point cloud to the `/pr2/3d_map/points` topic and make sure you change the `point_cloud_topic` to `/pr2/3d_map/points` in `sensors.yaml` in the `/pr2_robot/config/` directory. This topic is read by Moveit!, which uses this point cloud input to generate a collision map, allowing the robot to plan its trajectory.  Keep in mind that later when you go to pick up an object, you must first remove it from this point cloud so it is removed from the collision map!
-8. Rotate the robot to generate collision map of table sides. This can be accomplished by publishing joint angle value(in radians) to `/pr2/world_joint_controller/command`
-9. Rotate the robot back to its original state.
-10. Create a ROS Client for the “pick_place_routine” rosservice.  In the required steps above, you already created the messages you need to use this service. Checkout the [PickPlace.srv](https://github.com/udacity/RoboND-Perception-Project/tree/master/pr2_robot/srv) file to find out what arguments you must pass to this service.
-11. If everything was done correctly, when you pass the appropriate messages to the `pick_place_routine` service, the selected arm will perform pick and place operation and display trajectory in the RViz window
-12. Place all the objects from your pick list in their respective dropoff box and you have completed the challenge!
-13. Looking for a bigger challenge?  Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
-
-
-
-## [Rubric](https://review.udacity.com/#!/rubrics/1067/view) Points
-### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
-
----
-### Writeup / README
-
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
-
-You're reading it!
-
-### Exercise 1, 2 and 3 pipeline implemented
-#### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
-1. Once cloud is being loaded, downsample the cloud with Voxel filter. Downsampling helps in reducing density of the points cloud.
+#### 1. Complete Pipeline for filtering and RANSAC plane fitting implemented.
+1. Once cloud is being loaded, down-sample the cloud with Voxel filter. Down-sampling helps in reducing density of the points cloud.
 
    a. Before Outlier filtering output
  
@@ -55,7 +21,7 @@ LEAF_SIZE = 0.01
 # Set voxel or leaf size
 vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
 
-# Call filter funtion to obtain the resultant downsamples point cloud
+# Call filter function to obtain the resultant down-samples point cloud
 cloud_filtered = vox.filter()
 ```
    b. As PR2 sensor had noise, to remove the noisy data Outlier filter has been used (Below output is after applying outlier filter)
@@ -65,7 +31,7 @@ cloud_filtered = vox.filter()
 ```
 # outlier filtering
 olfilter = pcl_data.make_statistical_outlier_filter()
-# set number of neigbouring points to be analyzed
+# set number of neighboring points to be analyzed
 olfilter.set_mean_k(20)
 # set threshold scale factor
 th_scale_factor = 1.0
@@ -105,7 +71,7 @@ passthrough.set_filter_limits(axis_min, axis_max)
 cloud_filtered = passthrough.filter()
 ```
   
-4. RANSAC plane fitting done to identify table (ractangle / plane) surface. Once table identified, negative of it provides objects on the table.
+4. RANSAC plane fitting done to identify table (rectangle / plane) surface. Once table identified, negative of it provides objects on the table.
 
 
 ```
@@ -136,7 +102,7 @@ tree = white_cloud.make_kdtree()
 
 # Create a cluster extraction object
 ec = white_cloud.make_EuclideanClusterExtraction()
-# Set tolerences for distance threshold
+# Set tolerances for distance threshold
 # as well as min & max cluster size (in points)
 ec.set_ClusterTolerance(0.02)
 ec.set_MinClusterSize(10)
@@ -146,7 +112,7 @@ ec.set_SearchMethod(tree)
 #Extract indices for each of the discovered clusters
 cluster_indices = ec.Extract()
 ```
-   * Further for display / visulization purpose identified clusters / objects been color coded
+   * Further for display / visualization purpose identified clusters / objects been color coded
 
 ```
 # TODO: Create Cluster-Mask Point Cloud to visualize each cluster separately
@@ -231,7 +197,7 @@ detected_object_pub.publish(detected_objects)
 ![Image-6](./Misc/Recognition.png)
 
    a. SVM training
-   - SVM training has been done seprately using _train_svm.py_ & _capture_features.py_
+   - SVM training has been done separately using _train_svm.py_ & _capture_features.py_
    - I have used variation of 50 different views for each object
    - While RBF kernel used for better accuracy
    - Overall 96% accuracy achieved
@@ -288,15 +254,15 @@ for i, dropbox_param_i in enumerate(dropbox_list_param):
 
 10. Following lines of code creates yaml messages & dumps as a file. Following steps performed
 
-	a. Loop throough pick list
+	a. Loop thorough pick list
 
 	b. identify corresponding identified / correctly classified object & calculate it's mean
 
-	c. Correctly identified obejct's centroids / mean is being added to list & _pick_pose_
+	c. Correctly identified object's centroids / mean is being added to list & _pick_pose_
 
 	d. For each correctly identified object, corresponding dropbox identified after parsing group information
 
-	e. For each obejct dropbox location / co-ordinates are read & copied to the _plcae_pose_
+	e. For each object dropbox location / co-ordinates are read & copied to the _plcae_pose_
 
 	f. yaml dictionary created for each object
 
